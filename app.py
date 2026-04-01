@@ -20,6 +20,7 @@ To deploy on Render:
 import streamlit as st
 import pandas as pd
 import numpy as np
+from io import StringIO
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import yfinance as yf
@@ -545,7 +546,7 @@ def _download_ticker(ticker_symbol: str, start: str) -> pd.DataFrame:
     return raw
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, persist="disk")
 def load_data(ticker: str, vix_ticker: str, start: str) -> pd.DataFrame:
     raw = _download_ticker(ticker, start)
     if raw.empty:
@@ -575,9 +576,9 @@ def load_data(ticker: str, vix_ticker: str, start: str) -> pd.DataFrame:
 # ══════════════════════════════════════════════════════════════════
 # HMM TRAINING — unchanged from original
 # ══════════════════════════════════════════════════════════════════
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, persist="disk")
 def run_hmm(df_json: str):
-    df = pd.read_json(df_json)
+    df = pd.read_json(StringIO(df_json))
     df["Date"] = pd.to_datetime(df["Date"])
     feature_cols = ["Returns", "Volatility", "RSI", "VIX"]
     scaler   = StandardScaler()
@@ -1063,7 +1064,7 @@ with st.spinner("Training Model A and Model B HMM..."):
 
     results = st.session_state.results
 
-df = pd.read_json(results["df"])
+df = pd.read_json(StringIO(results["df"]))
 df["Date"] = pd.to_datetime(df["Date"])
 df = df.sort_values("Date").reset_index(drop=True)
 
